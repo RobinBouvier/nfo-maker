@@ -52,6 +52,57 @@ Playing Time.........: 42:22
 Total Size...........: 247.84 MB
 ```
 
+```
+Yes
+Fragile (1971)
+FLAC LOSSLESS 24bit-96kHz
+PBTHAL Vinyl
+
+
+allmusic.com...
+
+Fragile was Yes' breakthrough album, propelling them in a matter of weeks from a cult act to an international phenomenon; not coincidentally, it also marked the point where all of the elements of the music (and more) that would define their success for more than a decade fell into place fully formed. The science-fiction and fantasy elements that had driven the more successful songs on their preceding record, The Yes Album, were pushed much harder here, and not just in the music but in the packaging of the album. If not exactly their peak, Fragile was as perfect a record as the group would ever make, and just as flawless in its timing as its content. 
+
+
+foobar2000 1.4.3 / Dynamic Range Meter 1.1.1
+log date: 2020-11-05 14:04:26
+
+--------------------------------------------------------------------------------
+Analyzed: Yes / Fragile
+--------------------------------------------------------------------------------
+
+DR         Peak         RMS     Duration Track
+--------------------------------------------------------------------------------
+DR12      -1.00 dB   -15.66 dB      8:36 01-Roundabout
+DR12      -2.55 dB   -17.91 dB      1:41 02-Cans And Brahms
+DR10      -2.53 dB   -15.00 dB      1:29 03-We Have Heaven
+DR12      -1.87 dB   -16.66 dB      8:07 04-South Side Of The Sky
+DR13      -3.29 dB   -18.02 dB      0:36 05-Five Per Cent For Nothing
+DR13      -1.31 dB   -17.49 dB      3:31 06-Long Distance Runaround
+DR13      -1.00 dB   -17.40 dB      2:41 07-The Fish (Shindleria Praematurus)
+DR13      -6.42 dB   -23.94 dB      3:01 08-Mood For A Day
+DR12      -2.46 dB   -18.01 dB     11:23 09-Heart Of The Sunrise
+
+
+Number of tracks:  9
+Official DR value: DR12
+
+Samplerate:        96000 Hz
+Channels:          2
+Bits per sample:   24
+Bitrate:           2949 kbps
+Codec:             FLAC
+
+
+
+
+Support the artists...
+buy it if you like it!
+
+Thanks for Seeding!
+Cheers! ;)
+```
+
 # Exemple NFO films
 
 ```
