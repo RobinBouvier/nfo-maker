@@ -1,0 +1,94 @@
+Kingsman : Le Cercle d'or (2017)
+Source: N/A  |  Resolution: 1080p  |  Video: H.264 (AVC)  |  Audio: FR ac3 5.1 + EN ac3 5.1 + FR AAC 2.0
+
+Movie
+Title                        : Kingsman : Le Cercle d'or
+Original Title               : Kingsman: The Golden Circle
+Year                         : 2017
+Runtime                      : 141 min
+Genres                       : Action, Aventure, Comédie, Crime
+Countries                    : United Kingdom, United States of America
+TMDB URL                     : https://www.themoviedb.org/movie/343668
+IMDb URL                     : https://www.imdb.com/title/tt4649466
+TMDB Match                   : 343668 Kingsman : Le Cercle d'or (2017)
+Overview                     : Kingsman, l’élite du renseignement britannique en costume trois pièces, fait face à une menace sans précédent. Alors qu’une bombe s’abat et détruit leur quartier général, les agents font la découverte d’une puissante organisation alliée nommée Statesman, fondée il y a bien longtemps aux États-Unis. Face à cet ultime danger, les deux services d’élite n’auront d’autre choix que de réunir leurs forces pour sauver le monde des griffes d’un impitoyable ennemi, qui ne reculera devant rien dans sa quête destructrice.
+
+General
+Filename                     : Kingsman le Cercle d Or 2017 1080p FR EN X264 AC3-mHDgz.mkv
+Extension                    : mkv
+File Size                    : 3.07 GiB
+Duration                     : 02:21:02
+Overall Bitrate              : 3117 kb/s
+Container                    : Matroska / WebM
+
+Video
+Format                       : H.264 (AVC)
+Profile                      : High
+Bitrate                      : N/A
+Resolution                   : 1920x804
+Aspect Ratio                 : 160:67
+Frame Rate                   : 23.976 FPS
+Scan Type                    : progressive
+Bit Depth                    : 8 bits
+Chroma                       : 4:2:0
+Color Primaries              : bt709
+Transfer                     : bt709
+Matrix                       : bt709
+
+Audio
+Audio #1
+Format                       : ac3
+Bitrate                      : 384 kb/s
+Channels                     : 5.1
+Channel Layout               : 5.1(side)
+Sample Rate                  : 48000 Hz
+Language                     : FR
+Title                        : Surround
+Default                      : Yes
+Forced                       : No
+Delay                        : 16000 ms
+
+Audio #2
+Format                       : ac3
+Bitrate                      : 384 kb/s
+Channels                     : 5.1
+Channel Layout               : 5.1(side)
+Sample Rate                  : 48000 Hz
+Language                     : EN
+Title                        : Surround
+Default                      : No
+Forced                       : No
+Delay                        : 16000 ms
+
+Audio #3
+Format                       : AAC
+Bitrate                      : N/A
+Channels                     : 2.0
+Channel Layout               : stereo
+Sample Rate                  : 48000 Hz
+Language                     : FR
+Title                        : Stereo
+Default                      : No
+Forced                       : No
+Delay                        : 0 ms
+
+
+Subtitles
+Subtitle #1
+Format                       : ass
+Language                     : FR
+Default                      : No
+Forced                       : No
+
+Subtitle #2
+Format                       : ass
+Language                     : FR
+Default                      : No
+Forced                       : No
+
+
+File
+Path                         : C:\Users\leowb\Documents\nfo-maker\Tests\Kingsman le Cercle d Or 2017 1080p FR EN X264 AC3-mHDgz.mkv
+Size                         : 3.07 GiB
+Duration                     : 02:21:02
+Hash                         : SHA1 6fd8d2ae29c8b3afe4b87d4e8e926858592e5d5f

@@ -1,0 +1,179 @@
+General
+Unique ID                                : 250799337432793051295919671700052275625 (0xBCAE3205B26F3D4E90965A0E96B471A9)
+Complete name                            : Kingsman le Cercle d Or 2017 1080p FR EN X264 AC3-mHDgz.mkv
+Format                                   : Matroska
+Format version                           : Version 4
+File size                                : 3.07 GiB
+Duration                                 : 2 h 21 min
+Overall bit rate                         : 3 117 kb/s
+Frame rate                               : 23.976 FPS
+Title                                    : Kingsman le Cercle d Or 2017 1080p FR EN X264 AC3-mHDgz
+Encoded date                             : 2017-12-08 13:46:31 UTC / 2017-12-08T09:03:49Z UTC
+Writing application                      : mkvmerge 18.0.0 ('Apricity') 64-bit
+Writing library                          : libebml v1.3.5 + libmatroska v1.4.8 / Lavf57.7.2
+
+Video
+ID                                       : 1
+Format                                   : AVC
+Format/Info                              : Advanced Video Codec
+Format profile                           : High@L4
+Format settings                          : CABAC / 5 Ref Frames
+Format settings, CABAC                   : Yes
+Format settings, Reference frames        : 5 frames
+Codec ID                                 : V_MPEG4/ISO/AVC
+Duration                                 : 2 h 21 min
+Bit rate                                 : 2 186 kb/s
+Width                                    : 1 920 pixels
+Height                                   : 804 pixels
+Display aspect ratio                     : 2.39:1
+Frame rate mode                          : Constant
+Frame rate                               : 23.976 (24000/1001) FPS
+Color space                              : YUV
+Chroma subsampling                       : 4:2:0
+Bit depth                                : 8 bits
+Scan type                                : Progressive
+Bits/(Pixel*Frame)                       : 0.059
+Stream size                              : 2.15 GiB (70%)
+Writing library                          : x264 core 148 r2708 86b7198
+Encoding settings                        : cabac=1 / ref=5 / deblock=1:-1:-1 / analyse=0x3:0x113 / me=umh / subme=8 / psy=1 / psy_rd=1.00:0.15 / mixed_ref=1 / me_range=16 / chroma_me=1 / trellis=1 / 8x8dct=1 / cqm=0 / deadzone=21,11 / fast_pskip=1 / chroma_qp_offset=-3 / threads=18 / lookahead_threads=3 / sliced_threads=0 / nr=0 / decimate=1 / interlaced=0 / bluray_compat=0 / constrained_intra=0 / bframes=3 / b_pyramid=2 / b_adapt=2 / b_bias=0 / direct=3 / weightb=1 / open_gop=0 / weightp=2 / keyint=240 / keyint_min=24 / scenecut=40 / intra_refresh=0 / rc_lookahead=50 / rc=crf / mbtree=1 / crf=24.0 / qcomp=0.60 / qpmin=0 / qpmax=69 / qpstep=4 / ip_ratio=1.40 / aq=1:1.00
+Default                                  : Yes
+Forced                                   : No
+Color range                              : Limited
+Color primaries                          : BT.709
+Transfer characteristics                 : BT.709
+Matrix coefficients                      : BT.709
+
+Audio #1
+ID                                       : 2
+Format                                   : AC-3
+Format/Info                              : Audio Coding 3
+Commercial name                          : Dolby Digital
+Codec ID                                 : A_AC3
+Duration                                 : 2 h 21 min
+Bit rate mode                            : Constant
+Bit rate                                 : 384 kb/s
+Channel(s)                               : 6 channels
+Channel layout                           : L R C LFE Ls Rs
+Sampling rate                            : 48.0 kHz
+Frame rate                               : 31.250 FPS (1536 SPF)
+Compression mode                         : Lossy
+Delay relative to video                  : -5 ms
+Stream size                              : 387 MiB (12%)
+Title                                    : Surround
+Language                                 : French
+Service kind                             : Complete Main
+Default                                  : Yes
+Forced                                   : No
+Dialog Normalization                     : -31 dB
+cmixlev                                  : -4.5 dB
+surmixlev                                : -6 dB
+dialnorm_Average                         : -31 dB
+dialnorm_Minimum                         : -31 dB
+dialnorm_Maximum                         : -31 dB
+
+Audio #2
+ID                                       : 3
+Format                                   : AC-3
+Format/Info                              : Audio Coding 3
+Commercial name                          : Dolby Digital
+Codec ID                                 : A_AC3
+Duration                                 : 2 h 21 min
+Bit rate mode                            : Constant
+Bit rate                                 : 384 kb/s
+Channel(s)                               : 6 channels
+Channel layout                           : L R C LFE Ls Rs
+Sampling rate                            : 48.0 kHz
+Frame rate                               : 31.250 FPS (1536 SPF)
+Compression mode                         : Lossy
+Delay relative to video                  : -5 ms
+Stream size                              : 387 MiB (12%)
+Title                                    : Surround
+Language                                 : English
+Service kind                             : Complete Main
+Default                                  : No
+Forced                                   : No
+Dialog Normalization                     : -31 dB
+cmixlev                                  : -4.5 dB
+surmixlev                                : -6 dB
+dialnorm_Average                         : -31 dB
+dialnorm_Minimum                         : -31 dB
+dialnorm_Maximum                         : -31 dB
+
+Audio #3
+ID                                       : 4
+Format                                   : AAC LC
+Format/Info                              : Advanced Audio Codec Low Complexity
+Codec ID                                 : A_AAC-2
+Duration                                 : 2 h 21 min
+Bit rate                                 : 160 kb/s
+Channel(s)                               : 2 channels
+Channel layout                           : L R
+Sampling rate                            : 48.0 kHz
+Frame rate                               : 46.875 FPS (1024 SPF)
+Compression mode                         : Lossy
+Delay relative to video                  : -21 ms
+Stream size                              : 162 MiB (5%)
+Title                                    : Stereo
+Language                                 : French
+Default                                  : No
+Forced                                   : No
+
+Text #1
+ID                                       : 5
+Format                                   : ASS
+Codec ID                                 : S_TEXT/ASS
+Codec ID/Info                            : Advanced Sub Station Alpha
+Duration                                 : 1 h 58 min
+Bit rate                                 : 0 b/s
+Frame rate                               : 0.002 FPS
+Count of elements                        : 13
+Compression mode                         : Lossless
+Stream size                              : 543 Bytes (0%)
+Language                                 : French
+Default                                  : No
+Forced                                   : No
+
+Text #2
+ID                                       : 6
+Format                                   : ASS
+Codec ID                                 : S_TEXT/ASS
+Codec ID/Info                            : Advanced Sub Station Alpha
+Duration                                 : 2 h 19 min
+Bit rate                                 : 93 b/s
+Frame rate                               : 0.205 FPS
+Count of elements                        : 1718
+Compression mode                         : Lossless
+Stream size                              : 95.2 KiB (0%)
+Language                                 : French
+Default                                  : No
+Forced                                   : No
+
+Menu
+00:00:00.000                             : 00:00:00.000
+00:04:51.958                             : 00:04:51.958
+00:09:39.454                             : 00:09:39.454
+00:13:36.607                             : 00:13:36.607
+00:18:54.300                             : 00:18:54.300
+00:24:57.287                             : 00:24:57.287
+00:28:43.347                             : 00:28:43.347
+00:32:52.304                             : 00:32:52.304
+00:39:18.731                             : 00:39:18.731
+00:43:21.849                             : 00:43:21.849
+00:48:26.570                             : 00:48:26.570
+00:53:54.106                             : 00:53:54.106
+00:58:31.258                             : 00:58:31.258
+01:05:04.901                             : 01:05:04.901
+01:09:52.605                             : 01:09:52.522
+01:13:34.744                             : 01:13:34.744
+01:19:41.860                             : 01:19:41.860
+01:23:45.103                             : 01:23:45.103
+01:28:55.288                             : 01:28:55.288
+01:33:25.225                             : 01:33:25.225
+01:40:14.759                             : 01:40:14.759
+01:45:03.255                             : 01:45:03.255
+01:49:38.489                             : 01:49:38.489
+01:55:15.992                             : 01:55:15.992
+02:01:40.835                             : 02:01:40.835
+02:05:44.037                             : 02:05:44.036
+02:12:36.407                             : 02:12:36.407
+02:15:15.274                             : 02:15:15.274

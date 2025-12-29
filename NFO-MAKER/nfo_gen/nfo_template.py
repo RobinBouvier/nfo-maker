@@ -1,0 +1,266 @@
+"""NFO rendering helpers."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
+from .utils import format_bitrate, format_duration, format_size, normalize_language, quality_from_resolution
+
+
+VIDEO_CODEC_MAP = {
+    "avc": "H.264 (AVC)",
+    "h264": "H.264 (AVC)",
+    "hevc": "H.265 (HEVC)",
+    "h265": "H.265 (HEVC)",
+    "av1": "AV1",
+}
+
+AUDIO_CODEC_MAP = {
+    "ac-3": "AC3",
+    "e-ac-3": "E-AC3",
+    "dts": "DTS",
+    "aac": "AAC",
+    "truehd": "TrueHD",
+}
+
+
+def _codec_label(value: Optional[str], mapping: Dict[str, str]) -> str:
+    if not value:
+        return "N/A"
+    key = value.strip().lower()
+    return mapping.get(key, value)
+
+
+def _kv(key: str, value: Optional[str], width: int = 28) -> Optional[str]:
+    if value in (None, ""):
+        return None
+    return f"{key:<{width}} : {value}"
+
+
+def _bool_label(value: Optional[bool]) -> Optional[str]:
+    if value is None:
+        return None
+    return "Yes" if value else "No"
+
+
+def _channels_label(channels: Optional[int]) -> Optional[str]:
+    if not channels:
+        return None
+    mapping = {1: "1.0", 2: "2.0", 6: "5.1", 8: "7.1"}
+    return mapping.get(channels, str(channels))
+
+
+def _audio_summary(audios: List[Dict[str, Any]]) -> str:
+    parts = []
+    for audio in audios:
+        lang = normalize_language(audio.get("language")) or "N/A"
+        codec = _codec_label(audio.get("codec"), AUDIO_CODEC_MAP)
+        channels = _channels_label(audio.get("channels")) or ""
+        if channels:
+            parts.append(f"{lang} {codec} {channels}")
+        else:
+            parts.append(f"{lang} {codec}")
+    return " + ".join(parts) if parts else "N/A"
+
+
+def _video_summary(videos: List[Dict[str, Any]]) -> str:
+    if not videos:
+        return "N/A"
+    codec = _codec_label(videos[0].get("codec"), VIDEO_CODEC_MAP)
+    return codec
+
+
+def render_nfo(
+    movie: Optional[Dict[str, Any]],
+    tech: Dict[str, Any],
+    file_info: Dict[str, Any],
+    match_note: Optional[str] = None,
+    title_override: Optional[str] = None,
+    year_override: Optional[int] = None,
+) -> str:
+    general = tech.get("general", {})
+    videos = tech.get("videos", [])
+    audios = tech.get("audios", [])
+    subtitles = tech.get("subtitles", [])
+
+    title = title_override
+    year = year_override
+    if movie:
+        title = movie.get("title") or title
+        release = movie.get("release_date") or ""
+        if not year and release[:4].isdigit():
+            year = int(release[:4])
+
+    if not title:
+        title = general.get("filename") or "Unknown"
+
+    title_line = f"{title} ({year})" if year else title
+
+    if videos:
+        resolution = quality_from_resolution(videos[0].get("height"), videos[0].get("width"))
+    else:
+        resolution = "N/A"
+    header = (
+        f"{title_line}\n"
+        f"Source: N/A  |  Resolution: {resolution}  |  Video: {_video_summary(videos)}  |  "
+        f"Audio: {_audio_summary(audios)}"
+    )
+
+    lines = [header, "", "Movie"]
+
+    if movie:
+        lines.extend(
+            filter(
+                None,
+                [
+                    _kv("Title", movie.get("title")),
+                    _kv("Original Title", movie.get("original_title")),
+                    _kv("Year", str(year) if year else None),
+                    _kv("Runtime", f"{movie.get('runtime')} min" if movie.get("runtime") else None),
+                    _kv(
+                        "Genres",
+                        ", ".join(g.get("name") for g in movie.get("genres", [])) or None,
+                    ),
+                    _kv(
+                        "Countries",
+                        ", ".join(c.get("name") for c in movie.get("production_countries", []))
+                        or None,
+                    ),
+                    _kv("TMDB URL", movie.get("tmdb_url")),
+                    _kv("IMDb URL", movie.get("imdb_url")),
+                    _kv("TMDB Match", match_note),
+                    _kv("Overview", movie.get("overview")),
+                ],
+            )
+        )
+    else:
+        lines.append(_kv("Title", title) or "Title                        : N/A")
+
+    lines.extend(["", "General"])
+    lines.extend(
+        filter(
+            None,
+            [
+                _kv("Filename", general.get("filename")),
+                _kv("Extension", general.get("extension")),
+                _kv("File Size", format_size(general.get("size_bytes"))),
+                _kv("Duration", format_duration(general.get("duration_sec"))),
+                _kv("Overall Bitrate", format_bitrate(general.get("overall_bitrate"))),
+                _kv("Container", general.get("container")),
+                _kv("Encoded Date", general.get("encoded_date")),
+                _kv("Writing App", general.get("writing_app")),
+                _kv("Writing Library", general.get("writing_library")),
+            ],
+        )
+    )
+
+    lines.extend(["", "Video"])
+    if not videos:
+        lines.append("N/A")
+    else:
+        for idx, video in enumerate(videos, start=1):
+            if len(videos) > 1:
+                lines.append(f"Video #{idx}")
+            lines.extend(
+                filter(
+                    None,
+                    [
+                        _kv("Format", _codec_label(video.get("codec"), VIDEO_CODEC_MAP)),
+                        _kv("Profile", video.get("profile")),
+                        _kv("Bitrate", format_bitrate(video.get("bitrate"))),
+                        _kv("Resolution", _resolution(video)),
+                        _kv("Aspect Ratio", video.get("aspect_ratio")),
+                        _kv("Frame Rate", _frame_rate(video)),
+                        _kv("Scan Type", video.get("scan_type")),
+                        _kv("Bit Depth", _int_unit(video.get("bit_depth"), "bits")),
+                        _kv("Chroma", video.get("chroma")),
+                        _kv("Color Primaries", video.get("color_primaries")),
+                        _kv("Transfer", video.get("color_transfer")),
+                        _kv("Matrix", video.get("color_matrix")),
+                        _kv("HDR", video.get("hdr")),
+                    ],
+                )
+            )
+            if len(videos) > 1:
+                lines.append("")
+
+    lines.extend(["", "Audio"])
+    if not audios:
+        lines.append("N/A")
+    else:
+        for idx, audio in enumerate(audios, start=1):
+            lines.append(f"Audio #{idx}")
+            lines.extend(
+                filter(
+                    None,
+                    [
+                        _kv("Format", _codec_label(audio.get("codec"), AUDIO_CODEC_MAP)),
+                        _kv("Bitrate", format_bitrate(audio.get("bitrate"))),
+                        _kv("Channels", _channels_label(audio.get("channels"))),
+                        _kv("Channel Layout", audio.get("channel_layout")),
+                        _kv("Sample Rate", _int_unit(audio.get("sample_rate"), "Hz")),
+                        _kv("Language", audio.get("language")),
+                        _kv("Title", audio.get("title")),
+                        _kv("Default", _bool_label(audio.get("default"))),
+                        _kv("Forced", _bool_label(audio.get("forced"))),
+                        _kv("Delay", _int_unit(audio.get("delay_ms"), "ms")),
+                    ],
+                )
+            )
+            lines.append("")
+
+    lines.extend(["", "Subtitles"])
+    if not subtitles:
+        lines.append("N/A")
+    else:
+        for idx, sub in enumerate(subtitles, start=1):
+            lines.append(f"Subtitle #{idx}")
+            lines.extend(
+                filter(
+                    None,
+                    [
+                        _kv("Format", sub.get("format")),
+                        _kv("Language", sub.get("language")),
+                        _kv("Title", sub.get("title")),
+                        _kv("Default", _bool_label(sub.get("default"))),
+                        _kv("Forced", _bool_label(sub.get("forced"))),
+                    ],
+                )
+            )
+            lines.append("")
+
+    lines.extend(["", "File"])
+    lines.extend(
+        filter(
+            None,
+            [
+                _kv("Path", file_info.get("path")),
+                _kv("Size", format_size(file_info.get("size_bytes"))),
+                _kv("Duration", format_duration(file_info.get("duration_sec"))),
+                _kv("Hash", file_info.get("hash")),
+            ],
+        )
+    )
+
+    return "\n".join(line for line in lines if line is not None).rstrip() + "\n"
+
+
+def _resolution(video: Dict[str, Any]) -> Optional[str]:
+    width = video.get("width")
+    height = video.get("height")
+    if width and height:
+        return f"{width}x{height}"
+    return None
+
+
+def _frame_rate(video: Dict[str, Any]) -> Optional[str]:
+    rate = video.get("frame_rate")
+    if not rate:
+        return None
+    return f"{rate:.3f} FPS" if isinstance(rate, (int, float)) else str(rate)
+
+
+def _int_unit(value: Optional[int], unit: str) -> Optional[str]:
+    if value is None:
+        return None
+    return f"{value} {unit}"
