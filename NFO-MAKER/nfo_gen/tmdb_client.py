@@ -1,4 +1,4 @@
-"""TMDB API client with optional caching."""
+"""Client TMDB avec cache et gestion simple des erreurs."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ class TmdbError(RuntimeError):
 
 @dataclass
 class SearchResult:
+    """Representation simplifiee d'un resultat TMDB."""
     tmdb_id: int
     title: str
     original_title: str
@@ -32,6 +33,7 @@ class SearchResult:
 
 
 class TmdbClient:
+    """Client TMDB minimal: search/movie + movie details."""
     def __init__(
         self,
         token: Optional[str] = None,
@@ -48,6 +50,7 @@ class TmdbClient:
 
     @classmethod
     def from_env(cls, config_path: Optional[Path] = None) -> "TmdbClient":
+        """Construit le client depuis variables env ou config.json."""
         config = cls._load_config(config_path)
         token = os.environ.get("TMDB_TOKEN") or config.get("tmdb_token")
         api_key = os.environ.get("TMDB_API_KEY") or config.get("tmdb_api_key")
@@ -55,6 +58,7 @@ class TmdbClient:
 
     @staticmethod
     def _load_config(config_path: Optional[Path]) -> Dict[str, Any]:
+        """Charge un fichier de configuration JSON si present."""
         config_path = config_path or (get_config_dir() / "config.json")
         if not config_path.exists():
             return {}
@@ -64,6 +68,7 @@ class TmdbClient:
             return {}
 
     def _request(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Envoie une requete TMDB avec retries simples."""
         if not (self.token or self.api_key):
             raise TmdbError("TMDB token or API key not configured.")
         params = params or {}
@@ -93,10 +98,12 @@ class TmdbClient:
         raise TmdbError(f"TMDB request failed: {last_error}")
 
     def _cache_path(self, movie_id: int, lang: Optional[str]) -> Path:
+        """Construit le chemin de cache pour un film/langue."""
         suffix = lang or "default"
         return self.cache_dir / f"tmdb_{movie_id}_{suffix}.json"
 
     def get_movie(self, movie_id: int, lang: Optional[str] = None) -> Dict[str, Any]:
+        """Recupere un film (cache si dispo)."""
         cache_path = self._cache_path(movie_id, lang)
         if cache_path.exists():
             try:
@@ -110,11 +117,13 @@ class TmdbClient:
         return payload
 
     def get_external_ids(self, movie_id: int) -> Dict[str, Any]:
+        """Recupere les ids externes (IMDb, etc.)."""
         return self._request(f"/movie/{movie_id}/external_ids")
 
     def search_movie(
         self, query: str, year: Optional[int] = None, lang: Optional[str] = None
     ) -> List[SearchResult]:
+        """Recherche un film via TMDB search/movie."""
         params: Dict[str, Any] = {"query": query}
         if year:
             params["year"] = year
@@ -145,6 +154,7 @@ class TmdbClient:
         lang: Optional[str],
         interactive: bool = False,
     ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """Resout un film via id ou recherche avec selection simple."""
         if tmdb_id:
             return self.get_movie(tmdb_id, lang=lang), None
         if not title:

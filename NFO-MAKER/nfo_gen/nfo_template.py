@@ -1,4 +1,4 @@
-"""NFO rendering helpers."""
+"""Rendu texte du NFO a partir des donnees normalisees."""
 
 from __future__ import annotations
 
@@ -25,6 +25,7 @@ AUDIO_CODEC_MAP = {
 
 
 def _codec_label(value: Optional[str], mapping: Dict[str, str]) -> str:
+    """Mappe un codec vers un libelle lisible."""
     if not value:
         return "N/A"
     key = value.strip().lower()
@@ -32,18 +33,21 @@ def _codec_label(value: Optional[str], mapping: Dict[str, str]) -> str:
 
 
 def _kv(key: str, value: Optional[str], width: int = 28) -> Optional[str]:
+    """Formatte une ligne cle/valeur avec alignement."""
     if value in (None, ""):
         return None
     return f"{key:<{width}} : {value}"
 
 
 def _bool_label(value: Optional[bool]) -> Optional[str]:
+    """Affiche Yes/No pour un booleen."""
     if value is None:
         return None
     return "Yes" if value else "No"
 
 
 def _channels_label(channels: Optional[int]) -> Optional[str]:
+    """Normalise un nombre de canaux en 5.1/7.1/etc."""
     if not channels:
         return None
     mapping = {1: "1.0", 2: "2.0", 6: "5.1", 8: "7.1"}
@@ -51,6 +55,7 @@ def _channels_label(channels: Optional[int]) -> Optional[str]:
 
 
 def _audio_summary(audios: List[Dict[str, Any]]) -> str:
+    """Resume les pistes audio pour le header."""
     parts = []
     for audio in audios:
         lang = normalize_language(audio.get("language")) or "N/A"
@@ -64,6 +69,7 @@ def _audio_summary(audios: List[Dict[str, Any]]) -> str:
 
 
 def _video_summary(videos: List[Dict[str, Any]]) -> str:
+    """Resume la piste video principale pour le header."""
     if not videos:
         return "N/A"
     codec = _codec_label(videos[0].get("codec"), VIDEO_CODEC_MAP)
@@ -78,6 +84,7 @@ def render_nfo(
     title_override: Optional[str] = None,
     year_override: Optional[int] = None,
 ) -> str:
+    """Construit le NFO complet en sections Movie/General/Video/Audio/Subtitles/File."""
     general = tech.get("general", {})
     videos = tech.get("videos", [])
     audios = tech.get("audios", [])
@@ -100,12 +107,14 @@ def render_nfo(
         resolution = quality_from_resolution(videos[0].get("height"), videos[0].get("width"))
     else:
         resolution = "N/A"
+    # Header compact style release.
     header = (
         f"{title_line}\n"
         f"Source: N/A  |  Resolution: {resolution}  |  Video: {_video_summary(videos)}  |  "
         f"Audio: {_audio_summary(audios)}"
     )
 
+    # Sections principales.
     lines = [header, "", "Movie"]
 
     if movie:
@@ -246,6 +255,7 @@ def render_nfo(
 
 
 def _resolution(video: Dict[str, Any]) -> Optional[str]:
+    """Formate la resolution WxH si presente."""
     width = video.get("width")
     height = video.get("height")
     if width and height:
@@ -254,6 +264,7 @@ def _resolution(video: Dict[str, Any]) -> Optional[str]:
 
 
 def _frame_rate(video: Dict[str, Any]) -> Optional[str]:
+    """Formate le framerate avec 3 decimales."""
     rate = video.get("frame_rate")
     if not rate:
         return None
@@ -261,6 +272,7 @@ def _frame_rate(video: Dict[str, Any]) -> Optional[str]:
 
 
 def _int_unit(value: Optional[int], unit: str) -> Optional[str]:
+    """Ajoute une unite a une valeur numerique."""
     if value is None:
         return None
     return f"{value} {unit}"

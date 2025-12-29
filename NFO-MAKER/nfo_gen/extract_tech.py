@@ -1,4 +1,4 @@
-"""MediaInfo/ffprobe technical extraction."""
+"""Extraction technique via MediaInfo ou ffprobe."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from .utils import (
 
 
 def _run_cmd(args: List[str]) -> Optional[str]:
+    """Execute une commande et retourne stdout si succes."""
     try:
         result = subprocess.run(
             args,
@@ -35,6 +36,7 @@ def _run_cmd(args: List[str]) -> Optional[str]:
 
 
 def _mi_value(track: Dict[str, Any], keys: List[str]) -> Optional[str]:
+    """Recupere la premiere valeur existante dans un track MediaInfo."""
     for key in keys:
         if key in track:
             value = track.get(key)
@@ -44,6 +46,7 @@ def _mi_value(track: Dict[str, Any], keys: List[str]) -> Optional[str]:
 
 
 def _mi_bool(value: Optional[str]) -> Optional[bool]:
+    """Normalise un champ oui/non MediaInfo en booleen."""
     if value is None:
         return None
     v = str(value).strip().lower()
@@ -55,6 +58,7 @@ def _mi_bool(value: Optional[str]) -> Optional[bool]:
 
 
 def _mi_hdr(track: Dict[str, Any]) -> Optional[str]:
+    """Extrait un libelle HDR depuis les champs MediaInfo connus."""
     hdr = _mi_value(
         track,
         [
@@ -68,6 +72,7 @@ def _mi_hdr(track: Dict[str, Any]) -> Optional[str]:
 
 
 def _parse_mediainfo(data: Dict[str, Any], filename: str) -> Dict[str, Any]:
+    """Parse un JSON MediaInfo et normalise les sections utiles."""
     tracks = data.get("media", {}).get("track", [])
     general: Dict[str, Any] = {"filename": filename}
     videos: List[Dict[str, Any]] = []
@@ -154,6 +159,7 @@ def _parse_mediainfo(data: Dict[str, Any], filename: str) -> Dict[str, Any]:
 
 
 def _parse_chroma_from_pix_fmt(pix_fmt: Optional[str]) -> Optional[str]:
+    """Derive un chroma (4:2:0) depuis un pix_fmt ffprobe."""
     if not pix_fmt:
         return None
     m = None
@@ -168,6 +174,7 @@ def _parse_chroma_from_pix_fmt(pix_fmt: Optional[str]) -> Optional[str]:
 
 
 def _parse_ffprobe(data: Dict[str, Any], filename: str) -> Dict[str, Any]:
+    """Parse un JSON ffprobe et normalise les sections utiles."""
     fmt = data.get("format", {})
     tags = fmt.get("tags", {}) if isinstance(fmt, dict) else {}
     general: Dict[str, Any] = {
@@ -268,7 +275,9 @@ def _parse_ffprobe(data: Dict[str, Any], filename: str) -> Dict[str, Any]:
 
 
 def extract_tech(path: Path) -> Dict[str, Any]:
+    """Point d'entree: preferer MediaInfo, sinon fallback ffprobe."""
     filename = path.name
+    # MediaInfo est prioritaire si dispo.
     if shutil.which("mediainfo"):
         output = _run_cmd(["mediainfo", "--Output=JSON", str(path)])
         if output:
@@ -276,6 +285,7 @@ def extract_tech(path: Path) -> Dict[str, Any]:
                 return _parse_mediainfo(json.loads(output), filename)
             except json.JSONDecodeError:
                 pass
+    # Fallback ffprobe si MediaInfo absent/ko.
     output = _run_cmd(
         [
             "ffprobe",

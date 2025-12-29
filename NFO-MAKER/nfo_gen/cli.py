@@ -1,4 +1,4 @@
-"""CLI entrypoint for nfo_gen."""
+"""Interface en ligne de commande pour nfo_gen."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from .utils import compute_hash, format_duration, format_size
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construit l'argparse avec les options supportees."""
     parser = argparse.ArgumentParser(
         prog="nfo_gen",
         description="Generate a release-style NFO from a video file.",
@@ -41,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    """Point d'entree principal: genere le NFO pour un fichier video."""
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -49,12 +51,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"File not found: {video_path}", file=sys.stderr)
         return 1
 
+    # Extraction technique via MediaInfo/ffprobe.
     try:
         tech = extract_tech(video_path)
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
+    # Parsing du nom de fichier pour titre/annee.
     parsed = parse_filename(video_path.name)
     title = args.title or parsed.title
     year = args.year or parsed.year
@@ -62,9 +66,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     movie = None
     match_note = None
     if not args.no_tmdb:
+        # Client TMDB (env ou config).
         config_path = Path(args.config) if args.config else None
         client = TmdbClient.from_env(config_path=config_path)
         try:
+            # Resout le film (id direct ou recherche).
             movie, match_note = client.resolve_movie(
                 tmdb_id=args.tmdb_id,
                 title=title,
@@ -75,6 +81,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             if movie and movie.get("id"):
                 movie["tmdb_url"] = f"https://www.themoviedb.org/movie/{movie['id']}"
                 try:
+                    # Ajoute l'URL IMDb si possible.
                     external = client.get_external_ids(movie["id"])
                     imdb_id = external.get("imdb_id") if isinstance(external, dict) else None
                     if imdb_id:
@@ -85,6 +92,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"TMDB error: {exc}", file=sys.stderr)
             return 1
 
+    # Infos fichier: taille/duree/hash.
     size_bytes = tech.get("general", {}).get("size_bytes")
     duration_sec = tech.get("general", {}).get("duration_sec")
     if size_bytes is None:
@@ -100,6 +108,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         "hash": f"{args.hash_algo.upper()} {file_hash}",
     }
 
+    # Rendu final du NFO.
     nfo_text = render_nfo(
         movie=movie,
         tech=tech,
@@ -114,6 +123,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"Output exists: {output_path} (use --overwrite)", file=sys.stderr)
         return 1
 
+    # Ecriture du fichier NFO.
     output_path.write_text(nfo_text, encoding="utf-8")
     if args.print_out:
         print(nfo_text)

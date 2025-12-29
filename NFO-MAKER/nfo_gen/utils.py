@@ -1,4 +1,4 @@
-"""Shared utility helpers for the NFO generator."""
+"""Helpers utilitaires pour le generateur NFO."""
 
 from __future__ import annotations
 
@@ -32,6 +32,7 @@ LANG_MAP = {
 
 
 def normalize_language(value: Optional[str]) -> Optional[str]:
+    """Normalise un code langue en version courte (FR/EN/etc.)."""
     if not value:
         return None
     v = str(value).strip().lower()
@@ -45,6 +46,7 @@ def normalize_language(value: Optional[str]) -> Optional[str]:
 
 
 def parse_rational(value: Optional[str]) -> Optional[float]:
+    """Convertit une chaine rationnelle (ex: 24000/1001) en float."""
     if value is None:
         return None
     s = str(value).strip()
@@ -67,6 +69,7 @@ def parse_rational(value: Optional[str]) -> Optional[float]:
 
 
 def parse_int(value: Optional[object]) -> Optional[int]:
+    """Extrait un entier depuis une valeur brute ou une chaine."""
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -79,6 +82,7 @@ def parse_int(value: Optional[object]) -> Optional[int]:
 
 
 def parse_float(value: Optional[object]) -> Optional[float]:
+    """Extrait un float depuis une valeur brute ou une chaine."""
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -91,6 +95,7 @@ def parse_float(value: Optional[object]) -> Optional[float]:
 
 
 def parse_bytes(value: Optional[object]) -> Optional[int]:
+    """Convertit une taille textuelle (ex: 3.07 GiB) en octets."""
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -120,6 +125,7 @@ def parse_bytes(value: Optional[object]) -> Optional[int]:
 
 
 def parse_duration(value: Optional[object]) -> Optional[float]:
+    """Convertit une duree (ms/sec/hh:mm:ss) en secondes."""
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -152,6 +158,7 @@ def parse_duration(value: Optional[object]) -> Optional[float]:
 
 
 def format_duration(seconds: Optional[float]) -> str:
+    """Formate une duree en HH:MM:SS."""
     if seconds is None:
         return "N/A"
     total = int(round(seconds))
@@ -162,6 +169,7 @@ def format_duration(seconds: Optional[float]) -> str:
 
 
 def format_size(bytes_value: Optional[int]) -> str:
+    """Formate une taille en GiB avec 2 decimales."""
     if bytes_value is None:
         return "N/A"
     gib = bytes_value / (1024 ** 3)
@@ -169,12 +177,14 @@ def format_size(bytes_value: Optional[int]) -> str:
 
 
 def format_bitrate(bits_per_sec: Optional[int]) -> str:
+    """Formate un bitrate en kb/s."""
     if bits_per_sec is None:
         return "N/A"
     return f"{int(round(bits_per_sec / 1000.0))} kb/s"
 
 
 def compute_hash(path: Path, algo: str = "sha1") -> str:
+    """Calcule un hash fichier pour verification/release."""
     h = hashlib.new(algo)
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -183,6 +193,7 @@ def compute_hash(path: Path, algo: str = "sha1") -> str:
 
 
 def quality_from_resolution(height: Optional[int], width: Optional[int]) -> str:
+    """Deduit une qualite (ex: 1080p) a partir des dimensions."""
     if not height and not width:
         return "N/A"
     if height and height >= 2160:
@@ -207,6 +218,7 @@ def quality_from_resolution(height: Optional[int], width: Optional[int]) -> str:
 
 
 def first_present(values: Iterable[Optional[str]]) -> Optional[str]:
+    """Retourne la premiere valeur non vide dans une liste."""
     for value in values:
         if value:
             return value
@@ -214,10 +226,12 @@ def first_present(values: Iterable[Optional[str]]) -> Optional[str]:
 
 
 def ensure_dir(path: Path) -> None:
+    """Cree un dossier si besoin."""
     path.mkdir(parents=True, exist_ok=True)
 
 
 def get_cache_dir() -> Path:
+    """Retourne le dossier de cache selon l'OS."""
     if os.name == "nt":
         root = os.environ.get("LOCALAPPDATA") or str(Path.home() / ".cache")
     else:
@@ -226,6 +240,7 @@ def get_cache_dir() -> Path:
 
 
 def get_config_dir() -> Path:
+    """Retourne le dossier de config selon l'OS."""
     if os.name == "nt":
         root = os.environ.get("LOCALAPPDATA") or str(Path.home() / ".config")
     else:

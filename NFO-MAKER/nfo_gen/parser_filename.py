@@ -1,4 +1,4 @@
-"""Filename parsing helpers for movie title/year/language extraction."""
+"""Helpers de parsing de nom de fichier pour titre/annee/langue."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional
 
 
+# Tokens techniques courants a ignorer pour isoler le titre.
 TAG_TOKENS = {
     "1080p",
     "2160p",
@@ -59,6 +60,7 @@ TAG_TOKENS = {
     "vff",
 }
 
+# Mots cles de langue a detecter dans le nom de fichier.
 LANG_TOKENS = {
     "fr": "FR",
     "french": "FR",
@@ -74,6 +76,7 @@ LANG_TOKENS = {
     "multi": "MULTI",
 }
 
+# Regex simples pour annee et resolution.
 YEAR_RE = re.compile(r"^(19|20)\d{2}$")
 RESOLUTION_RE = re.compile(r"^\d{3,4}p$")
 
@@ -87,9 +90,13 @@ class ParsedName:
 
 
 def parse_filename(filename: str) -> ParsedName:
+    """Extrait un titre, une annee et des langues depuis le nom."""
     base = Path(filename).stem
+    # Normalise les separateurs typiques.
     base = base.replace(".", " ").replace("_", " ")
+    # Supprime les blocs entre crochets/parentheses.
     base = re.sub(r"[\[\(\{].*?[\]\)\}]", " ", base)
+    # Supprime les suffixes type groupe apres un tiret final.
     base = re.sub(r"\s*-\s*[^-]+$", " ", base)
     tokens = [t for t in base.split() if t]
 
