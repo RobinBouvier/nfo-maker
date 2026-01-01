@@ -62,7 +62,8 @@ python -m nfo_gen --interactive
 Interactive flow:
 - selects the movie from the first 5 TMDB results
 - reviews each NFO section and lets you fix incorrect lines
-- optional rename to a conventional filename
+- handles N/A values (enter a value, keep N/A, or remove the line)
+- optional rename to a conventional filename (default: yes)
 
 ## Cache
 TMDB movie details are cached in:
