@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .utils import format_bitrate, format_duration, format_size, normalize_language, quality_from_resolution
@@ -260,6 +261,39 @@ def render_nfo_sections(
     ]
 
 
+def render_nfo_from_sections(sections: List[tuple[str, List[str]]]) -> str:
+    """Construit le NFO complet en appliquant header/footer/separateurs."""
+    header_banner = _read_banner("header.txt")
+    footer_banner = _read_banner("footer.txt")
+    separator_template = _read_banner("separator.txt")
+
+    lines: List[str] = []
+    if header_banner:
+        lines.extend(header_banner)
+
+    for name, section_lines in sections:
+        if name == "Header":
+            lines.extend(section_lines)
+
+    for name, section_lines in sections:
+        if name == "Header":
+            continue
+        separator = _build_separator(name, separator_template)
+        if separator:
+            lines.extend(separator)
+        else:
+            lines.append(name)
+        framed_lines = _frame_section_lines(section_lines, separator_template)
+        lines.extend(framed_lines)
+
+    if footer_banner:
+        if lines and lines[-1] != "":
+            lines.append("")
+        lines.extend(footer_banner)
+
+    return "\n".join(line for line in lines if line is not None).rstrip() + "\n"
+
+
 def render_nfo(
     movie: Optional[Dict[str, Any]],
     tech: Dict[str, Any],
@@ -279,16 +313,7 @@ def render_nfo(
         year_override=year_override,
         source_override=source_override,
     )
-    lines: List[str] = []
-    for idx, (name, section_lines) in enumerate(sections):
-        if name == "Header":
-            lines.extend(section_lines)
-            continue
-        if lines:
-            lines.append("")
-        lines.append(name)
-        lines.extend(section_lines)
-    return "\n".join(line for line in lines if line is not None).rstrip() + "\n"
+    return render_nfo_from_sections(sections)
 
 
 def _resolution(video: Dict[str, Any]) -> Optional[str]:
@@ -313,3 +338,59 @@ def _int_unit(value: Optional[int], unit: str) -> Optional[str]:
     if value is None:
         return None
     return f"{value} {unit}"
+
+
+def _read_banner(name: str) -> List[str]:
+    """Lit un fichier de bannieres (header/footer/separator) si present."""
+    banners_dir = Path(__file__).resolve().parent.parent / "banners"
+    banner_path = banners_dir / name
+    if not banner_path.exists():
+        return []
+    content = banner_path.read_text(encoding="utf-8")
+    return content.splitlines()
+
+
+def _build_separator(title: str, template_lines: List[str]) -> List[str]:
+    """Construit un separateur centre avec le titre de section."""
+    if not template_lines:
+        return []
+    if len(template_lines) < 2:
+        return list(template_lines)
+    middle = template_lines[1]
+    if len(middle) < 2:
+        return list(template_lines)
+    inner_width = len(middle) - 2
+    safe_title = title[:inner_width]
+    centered = safe_title.center(inner_width)
+    updated = list(template_lines)
+    updated[1] = f"{middle[0]}{centered}{middle[-1]}"
+    return updated
+
+
+def _frame_section_lines(lines: List[str], template_lines: List[str]) -> List[str]:
+    """Encadre les lignes avec des motifs alternes gauche/droite."""
+    if len(template_lines) < 4:
+        return list(lines)
+    motifs = _extract_motifs(template_lines[3:])
+    if not motifs:
+        return list(lines)
+    width = len(template_lines[0])
+    framed: List[str] = []
+    for idx, line in enumerate(lines):
+        left, right = motifs[idx % len(motifs)]
+        inner_width = width - len(left) - len(right) - 2
+        safe_line = (line or "")[:inner_width].center(inner_width)
+        framed.append(f"{left} {safe_line} {right}")
+    return framed
+
+
+def _extract_motifs(lines: List[str]) -> List[tuple[str, str]]:
+    """Extrait les motifs gauche/droite depuis les lignes du template."""
+    motifs: List[tuple[str, str]] = []
+    for line in lines:
+        if len(line) < 6:
+            continue
+        left = line[:3]
+        right = line[-3:]
+        motifs.append((left, right))
+    return motifs

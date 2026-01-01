@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .extract_tech import extract_tech
-from .nfo_template import render_nfo, render_nfo_sections
+from .imdb_client import ImdbClient, ImdbError
+from .nfo_template import render_nfo, render_nfo_from_sections, render_nfo_sections
 from .parser_filename import parse_filename
 from .tmdb_client import TmdbClient, TmdbError
 from .utils import compute_hash, format_duration, format_size, quality_from_resolution
@@ -282,10 +283,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     movie: Optional[Dict[str, object]] = None
     match_note: Optional[str] = None
     client: Optional[TmdbClient] = None
+    imdb_client: Optional[ImdbClient] = None
     if not args.no_tmdb:
         # Client TMDB (env ou config).
         config_path = Path(args.config) if args.config else None
         client = TmdbClient.from_env(config_path=config_path)
+        imdb_client = ImdbClient.from_env(config_path=config_path)
         try:
             # Resout le film (id direct ou recherche).
             movie, match_note = client.resolve_movie(
@@ -295,6 +298,31 @@ def main(argv: Optional[list[str]] = None) -> int:
                 lang=args.lang,
                 interactive=args.interactive,
             )
+            if not movie and imdb_client and imdb_client.api_key and title:
+                try:
+                    imdb_result = imdb_client.search_title(title, year=year)
+                except ImdbError:
+                    imdb_result = None
+                if imdb_result:
+                    imdb_title, imdb_year = imdb_result
+                    print(f"IMDb title: {imdb_title} ({imdb_year or 'N/A'})")
+                    movie, match_note = client.resolve_movie(
+                        tmdb_id=args.tmdb_id,
+                        title=imdb_title,
+                        year=imdb_year or year,
+                        lang=args.lang,
+                        interactive=args.interactive,
+                    )
+            if not movie and args.interactive:
+                manual = input("Aucun resultat TMDB. Titre manuel (laisser vide pour ignorer): ").strip()
+                if manual:
+                    movie, match_note = client.resolve_movie(
+                        tmdb_id=args.tmdb_id,
+                        title=manual,
+                        year=year,
+                        lang=args.lang,
+                        interactive=args.interactive,
+                    )
             if client:
                 enrich_movie(client, movie)
         except TmdbError as exc:
@@ -487,16 +515,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             video_path = prompt_rename(video_path, title, tech, source)
             file_info = build_file_info(video_path, tech, args.hash_algo)
         # Reconstruit le NFO avec les sections ajustees.
-        nfo_lines: List[str] = []
-        for sec_name, sec_lines in sections:
-            if sec_name == "Header":
-                nfo_lines.extend(sec_lines)
-                continue
-            if nfo_lines:
-                nfo_lines.append("")
-            nfo_lines.append(sec_name)
-            nfo_lines.extend(sec_lines)
-        nfo_text = "\n".join(line for line in nfo_lines if line is not None).rstrip() + "\n"
+        nfo_text = render_nfo_from_sections(sections)
     else:
         # Rendu final du NFO.
         nfo_text = render_nfo(

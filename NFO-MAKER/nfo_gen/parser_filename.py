@@ -24,6 +24,8 @@ TAG_TOKENS = {
     "bluray",
     "bdrip",
     "brrip",
+    "dvdrip",
+    "dvd",
     "remux",
     "web",
     "webdl",
@@ -79,6 +81,7 @@ LANG_TOKENS = {
 # Regex simples pour annee et resolution.
 YEAR_RE = re.compile(r"^(19|20)\d{2}$")
 RESOLUTION_RE = re.compile(r"^\d{3,4}p$")
+AUDIO_TOKEN_RE = re.compile(r"^(?:ac3|eac3|ddp|dts|aac|truehd)(?:\d+(?:\.\d+)?)?ch?$")
 
 
 @dataclass
@@ -93,11 +96,11 @@ def parse_filename(filename: str) -> ParsedName:
     """Extrait un titre, une annee et des langues depuis le nom."""
     base = Path(filename).stem
     # Normalise les separateurs typiques.
-    base = base.replace(".", " ").replace("_", " ")
+    base = base.replace(".", " ").replace("_", " ").replace("-", " ")
     # Supprime les blocs entre crochets/parentheses.
     base = re.sub(r"[\[\(\{].*?[\]\)\}]", " ", base)
-    # Supprime les suffixes type groupe apres un tiret final.
-    base = re.sub(r"\s*-\s*[^-]+$", " ", base)
+    # Supprime les suffixes type groupe apres un tiret final (avec espaces).
+    base = re.sub(r"\s+-\s+[^-]+$", " ", base)
     tokens = [t for t in base.split() if t]
 
     year = None
@@ -117,6 +120,8 @@ def parse_filename(filename: str) -> ParsedName:
         if lower in TAG_TOKENS:
             continue
         if RESOLUTION_RE.match(lower):
+            continue
+        if AUDIO_TOKEN_RE.match(lower):
             continue
         cleaned.append(token)
 
