@@ -46,7 +46,7 @@ Options:
 - --output path/to/output.nfo
 - --overwrite
 - --no-tmdb
-- --interactive
+- --interactive (guided CLI prompts + TMDB selection)
 - --config path/to/config.json
 - --hash sha1|sha256
 - --print
@@ -56,7 +56,13 @@ Examples:
 ```bash
 python -m nfo_gen "Kingsman le Cercle d Or 2017 1080p FR EN X264 AC3-mHDgz.mkv"
 python -m nfo_gen --tmdb-id 343668 --lang fr-FR "movie.mkv"
+python -m nfo_gen --interactive
 ```
+
+Interactive flow:
+- selects the movie from the first 5 TMDB results
+- reviews each NFO section and lets you fix incorrect lines
+- optional rename to a conventional filename
 
 ## Cache
 TMDB movie details are cached in:

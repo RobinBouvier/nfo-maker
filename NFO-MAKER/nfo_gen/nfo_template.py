@@ -76,15 +76,16 @@ def _video_summary(videos: List[Dict[str, Any]]) -> str:
     return codec
 
 
-def render_nfo(
+def render_nfo_sections(
     movie: Optional[Dict[str, Any]],
     tech: Dict[str, Any],
     file_info: Dict[str, Any],
     match_note: Optional[str] = None,
     title_override: Optional[str] = None,
     year_override: Optional[int] = None,
-) -> str:
-    """Construit le NFO complet en sections Movie/General/Video/Audio/Subtitles/File."""
+    source_override: Optional[str] = None,
+) -> List[tuple[str, List[str]]]:
+    """Construit les sections NFO pour une verification interactive."""
     general = tech.get("general", {})
     videos = tech.get("videos", [])
     audios = tech.get("audios", [])
@@ -107,18 +108,17 @@ def render_nfo(
         resolution = quality_from_resolution(videos[0].get("height"), videos[0].get("width"))
     else:
         resolution = "N/A"
+    source = source_override or "N/A"
     # Header compact style release.
     header = (
         f"{title_line}\n"
-        f"Source: N/A  |  Resolution: {resolution}  |  Video: {_video_summary(videos)}  |  "
+        f"Source: {source}  |  Resolution: {resolution}  |  Video: {_video_summary(videos)}  |  "
         f"Audio: {_audio_summary(audios)}"
     )
 
-    # Sections principales.
-    lines = [header, "", "Movie"]
-
+    movie_lines: List[str] = []
     if movie:
-        lines.extend(
+        movie_lines.extend(
             filter(
                 None,
                 [
@@ -143,10 +143,9 @@ def render_nfo(
             )
         )
     else:
-        lines.append(_kv("Title", title) or "Title                        : N/A")
+        movie_lines.append(_kv("Title", title) or "Title                        : N/A")
 
-    lines.extend(["", "General"])
-    lines.extend(
+    general_lines = list(
         filter(
             None,
             [
@@ -163,14 +162,14 @@ def render_nfo(
         )
     )
 
-    lines.extend(["", "Video"])
+    video_lines: List[str] = []
     if not videos:
-        lines.append("N/A")
+        video_lines.append("N/A")
     else:
         for idx, video in enumerate(videos, start=1):
             if len(videos) > 1:
-                lines.append(f"Video #{idx}")
-            lines.extend(
+                video_lines.append(f"Video #{idx}")
+            video_lines.extend(
                 filter(
                     None,
                     [
@@ -191,15 +190,15 @@ def render_nfo(
                 )
             )
             if len(videos) > 1:
-                lines.append("")
+                video_lines.append("")
 
-    lines.extend(["", "Audio"])
+    audio_lines: List[str] = []
     if not audios:
-        lines.append("N/A")
+        audio_lines.append("N/A")
     else:
         for idx, audio in enumerate(audios, start=1):
-            lines.append(f"Audio #{idx}")
-            lines.extend(
+            audio_lines.append(f"Audio #{idx}")
+            audio_lines.extend(
                 filter(
                     None,
                     [
@@ -216,15 +215,15 @@ def render_nfo(
                     ],
                 )
             )
-            lines.append("")
+            audio_lines.append("")
 
-    lines.extend(["", "Subtitles"])
+    subtitle_lines: List[str] = []
     if not subtitles:
-        lines.append("N/A")
+        subtitle_lines.append("N/A")
     else:
         for idx, sub in enumerate(subtitles, start=1):
-            lines.append(f"Subtitle #{idx}")
-            lines.extend(
+            subtitle_lines.append(f"Subtitle #{idx}")
+            subtitle_lines.extend(
                 filter(
                     None,
                     [
@@ -236,10 +235,9 @@ def render_nfo(
                     ],
                 )
             )
-            lines.append("")
+            subtitle_lines.append("")
 
-    lines.extend(["", "File"])
-    lines.extend(
+    file_lines = list(
         filter(
             None,
             [
@@ -251,6 +249,45 @@ def render_nfo(
         )
     )
 
+    return [
+        ("Header", [header]),
+        ("Movie", movie_lines or ["N/A"]),
+        ("General", general_lines or ["N/A"]),
+        ("Video", video_lines or ["N/A"]),
+        ("Audio", audio_lines or ["N/A"]),
+        ("Subtitles", subtitle_lines or ["N/A"]),
+        ("File", file_lines or ["N/A"]),
+    ]
+
+
+def render_nfo(
+    movie: Optional[Dict[str, Any]],
+    tech: Dict[str, Any],
+    file_info: Dict[str, Any],
+    match_note: Optional[str] = None,
+    title_override: Optional[str] = None,
+    year_override: Optional[int] = None,
+    source_override: Optional[str] = None,
+) -> str:
+    """Construit le NFO complet en sections Movie/General/Video/Audio/Subtitles/File."""
+    sections = render_nfo_sections(
+        movie=movie,
+        tech=tech,
+        file_info=file_info,
+        match_note=match_note,
+        title_override=title_override,
+        year_override=year_override,
+        source_override=source_override,
+    )
+    lines: List[str] = []
+    for idx, (name, section_lines) in enumerate(sections):
+        if name == "Header":
+            lines.extend(section_lines)
+            continue
+        if lines:
+            lines.append("")
+        lines.append(name)
+        lines.extend(section_lines)
     return "\n".join(line for line in lines if line is not None).rstrip() + "\n"
 
 

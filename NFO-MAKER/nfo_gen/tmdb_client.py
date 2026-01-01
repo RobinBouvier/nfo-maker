@@ -59,13 +59,21 @@ class TmdbClient:
     @staticmethod
     def _load_config(config_path: Optional[Path]) -> Dict[str, Any]:
         """Charge un fichier de configuration JSON si present."""
-        config_path = config_path or (get_config_dir() / "config.json")
-        if not config_path.exists():
-            return {}
-        try:
-            return json.loads(config_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            return {}
+        if config_path:
+            candidates = [config_path]
+        else:
+            local_candidates = [
+                Path.cwd() / "config.json",
+                Path(__file__).resolve().parent / "config.json",
+            ]
+            candidates = local_candidates + [get_config_dir() / "config.json"]
+        for candidate in candidates:
+            if candidate.exists():
+                try:
+                    return json.loads(candidate.read_text(encoding="utf-8"))
+                except json.JSONDecodeError:
+                    return {}
+        return {}
 
     def _request(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Envoie une requete TMDB avec retries simples."""
@@ -164,14 +172,20 @@ class TmdbClient:
             return None, None
         if interactive:
             print("TMDB matches:")
-            for idx, result in enumerate(results[:5], start=1):
+            shown = results[:5]
+            for idx, result in enumerate(shown, start=1):
                 label = f"{result.title} ({result.year or 'N/A'})"
                 print(f"  {idx}) {label} [id {result.tmdb_id}]")
-            choice = input("Select match (1-5, Enter for 1): ").strip()
-            if choice.isdigit() and 1 <= int(choice) <= min(5, len(results)):
-                picked = results[int(choice) - 1]
-            else:
-                picked = results[0]
+            max_idx = len(shown)
+            while True:
+                choice = input(f"Select match (1-{max_idx}, Enter for 1): ").strip()
+                if not choice:
+                    picked = shown[0]
+                    break
+                if choice.isdigit() and 1 <= int(choice) <= max_idx:
+                    picked = shown[int(choice) - 1]
+                    break
+                print("Invalid selection. Try again.")
         else:
             def score(result: SearchResult) -> float:
                 boost = 5.0 if year and result.year == year else 0.0
