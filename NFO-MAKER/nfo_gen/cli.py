@@ -13,7 +13,7 @@ from .imdb_client import ImdbClient, ImdbError
 from .nfo_template import render_nfo, render_nfo_from_sections, render_nfo_sections
 from .parser_filename import parse_filename
 from .tmdb_client import TmdbClient, TmdbError
-from .utils import compute_hash, format_duration, format_size, quality_from_resolution
+from .utils import compute_hash, format_duration, format_size, normalize_language, quality_from_resolution
 
 
 SOURCE_TOKENS = {
@@ -77,6 +77,18 @@ def prompt_nonempty(prompt: str) -> str:
         if value:
             return value
         print("La valeur ne peut pas etre vide.")
+
+
+def prompt_multiline(prompt: str) -> List[str]:
+    """Demande plusieurs lignes jusqu'a une ligne vide."""
+    print(prompt)
+    lines: List[str] = []
+    while True:
+        value = input().rstrip()
+        if not value:
+            break
+        lines.append(value)
+    return lines
 
 
 def prompt_int_in_range(prompt: str, min_value: int, max_value: int) -> int:
@@ -143,6 +155,20 @@ def slugify_ascii(value: str) -> str:
     return slug.strip("-")
 
 
+def slugify_release_title(value: str) -> str:
+    """Normalise un titre pour un nom de release avec des points."""
+    cleaned = []
+    for char in value.strip():
+        if char.isalnum() and ord(char) < 128:
+            cleaned.append(char)
+        else:
+            cleaned.append(".")
+    slug = "".join(cleaned)
+    while ".." in slug:
+        slug = slug.replace("..", ".")
+    return slug.strip(".")
+
+
 def audio_tag(audios: List[Dict[str, object]]) -> str:
     """Construit un tag audio court pour le nom de fichier."""
     if not audios:
@@ -156,9 +182,38 @@ def audio_tag(audios: List[Dict[str, object]]) -> str:
     return (codec + channel_tag) or "AUDIO"
 
 
+def language_tag(audios: List[Dict[str, object]]) -> str:
+    """Construit un tag langue court (ex: MULTi/FR/EN)."""
+    langs: List[str] = []
+    for audio in audios:
+        lang = normalize_language(audio.get("language"))
+        if lang and lang not in langs:
+            langs.append(lang)
+    if not langs:
+        return "LANG"
+    if len(langs) > 1:
+        return "MULTi"
+    return langs[0]
+
+
+def video_tag(videos: List[Dict[str, object]]) -> str:
+    """Construit un tag video court (H264/H265/AV1)."""
+    if not videos:
+        return "VIDEO"
+    codec = str(videos[0].get("codec") or "").lower()
+    if codec in {"hevc", "h265"}:
+        return "H265"
+    if codec in {"avc", "h264"}:
+        return "H264"
+    if codec == "av1":
+        return "AV1"
+    return codec.upper() or "VIDEO"
+
+
 def build_conventional_name(
     video_path: Path,
     title: Optional[str],
+    year: Optional[int],
     tech: Dict[str, object],
     source: Optional[str],
 ) -> str:
@@ -167,26 +222,30 @@ def build_conventional_name(
     videos = tech.get("videos", []) if isinstance(tech, dict) else []
     audios = tech.get("audios", []) if isinstance(tech, dict) else []
     base_title = title or general.get("filename") or video_path.stem
-    title_slug = slugify_ascii(str(base_title))
-    source = source or "SOURCE"
+    title_slug = slugify_release_title(str(base_title))
+    year_tag = str(year) if year else "YEAR"
+    lang = language_tag(audios) if isinstance(audios, list) else "LANG"
+    source = (source or "SOURCE").upper()
     resolution = "RESOLUTION"
     if videos:
         height = videos[0].get("height")
         width = videos[0].get("width")
         resolution = quality_from_resolution(height, width)
-    audio = audio_tag(audios) if isinstance(audios, list) else "AUDIO"
+    video = video_tag(videos) if isinstance(videos, list) else "VIDEO"
+    group = "TSC"
     ext = video_path.suffix
-    return f"{title_slug}.{source}.{resolution}.{audio}{ext}"
+    return f"{title_slug}.{year_tag}.{lang}.{resolution}.{source}.{video}-{group}{ext}"
 
 
 def prompt_rename(
     video_path: Path,
     title: Optional[str],
+    year: Optional[int],
     tech: Dict[str, object],
     source: Optional[str],
 ) -> Path:
     """Propose un renommage de fichier et applique si confirme."""
-    proposed = build_conventional_name(video_path, title, tech, source)
+    proposed = build_conventional_name(video_path, title, year, tech, source)
     print(f"Nom propose: {proposed}")
     if not prompt_yes_no("Renommer le fichier avec ce nom ?", default=True):
         manual = input("Nom manuel (laisser vide pour ne pas renommer): ").strip()
@@ -298,6 +357,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 lang=args.lang,
                 interactive=args.interactive,
             )
+            if movie and not year:
+                release = str(movie.get("release_date") or "")
+                if release[:4].isdigit():
+                    year = int(release[:4])
             if not movie and imdb_client and imdb_client.api_key and title:
                 try:
                     imdb_result = imdb_client.search_title(title, year=year)
@@ -314,15 +377,26 @@ def main(argv: Optional[list[str]] = None) -> int:
                         interactive=args.interactive,
                     )
             if not movie and args.interactive:
-                manual = input("Aucun resultat TMDB. Titre manuel (laisser vide pour ignorer): ").strip()
-                if manual:
-                    movie, match_note = client.resolve_movie(
-                        tmdb_id=args.tmdb_id,
-                        title=manual,
-                        year=year,
-                        lang=args.lang,
-                        interactive=args.interactive,
-                    )
+                if prompt_yes_no("Aucun resultat TMDB. Lancer une recherche TMDB manuelle ?", default=True):
+                    manual = input("Titre de recherche TMDB (laisser vide pour ignorer): ").strip()
+                    if manual:
+                        movie, match_note = client.resolve_movie(
+                            tmdb_id=args.tmdb_id,
+                            title=manual,
+                            year=year,
+                            lang=args.lang,
+                            interactive=args.interactive,
+                        )
+                if not movie:
+                    manual = input("Aucun resultat TMDB. Titre manuel (laisser vide pour ignorer): ").strip()
+                    if manual:
+                        movie, match_note = client.resolve_movie(
+                            tmdb_id=args.tmdb_id,
+                            title=manual,
+                            year=year,
+                            lang=args.lang,
+                            interactive=args.interactive,
+                        )
             if client:
                 enrich_movie(client, movie)
         except TmdbError as exc:
@@ -512,8 +586,24 @@ def main(argv: Optional[list[str]] = None) -> int:
         if prompt_yes_no("Renommer le fichier dans un format conventionnel ?", default=True):
             if not source:
                 source = input("Source (BDRIP/WEBRIP/etc., laisser vide pour SOURCE): ").strip() or None
-            video_path = prompt_rename(video_path, title, tech, source)
+            rename_title = title
+            if movie and movie.get("title"):
+                rename_title = str(movie.get("title"))
+            rename_year = year
+            if movie and not rename_year:
+                release = str(movie.get("release_date") or "")
+                if release[:4].isdigit():
+                    rename_year = int(release[:4])
+            video_path = prompt_rename(video_path, rename_title, rename_year, tech, source)
             file_info = build_file_info(video_path, tech, args.hash_algo)
+        if prompt_yes_no("Ajouter une section Notes ?", default=False):
+            note_lines = prompt_multiline("Entrez les notes (ligne vide pour terminer):")
+            if note_lines:
+                sections.append(("Notes", note_lines))
+        if prompt_yes_no("Ajouter une section Greetz ?", default=False):
+            greetz_lines = prompt_multiline("Entrez les greetz (ligne vide pour terminer):")
+            if greetz_lines:
+                sections.append(("Greetz", greetz_lines))
         # Reconstruit le NFO avec les sections ajustees.
         nfo_text = render_nfo_from_sections(sections)
     else:
