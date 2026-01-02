@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import textwrap
 from typing import Any, Dict, List, Optional
 
 from .utils import format_bitrate, format_duration, format_size, normalize_language, quality_from_resolution
@@ -33,11 +34,11 @@ def _codec_label(value: Optional[str], mapping: Dict[str, str]) -> str:
     return mapping.get(key, value)
 
 
-def _kv(key: str, value: Optional[str], width: int = 28) -> Optional[str]:
-    """Formatte une ligne cle/valeur avec alignement."""
+def _kv(key: str, value: Optional[str], width: int = 20) -> Optional[str]:
+    """Formatte une ligne cle/valeur."""
     if value in (None, ""):
         return None
-    return f"{key:<{width}} : {value}"
+    return f"{key}: {value}"
 
 
 def _bool_label(value: Optional[bool]) -> Optional[str]:
@@ -139,7 +140,6 @@ def render_nfo_sections(
                     _kv("TMDB URL", movie.get("tmdb_url")),
                     _kv("IMDb URL", movie.get("imdb_url")),
                     _kv("TMDB Match", match_note),
-                    _kv("Overview", movie.get("overview")),
                 ],
             )
         )
@@ -242,7 +242,6 @@ def render_nfo_sections(
         filter(
             None,
             [
-                _kv("Path", file_info.get("path")),
                 _kv("Size", format_size(file_info.get("size_bytes"))),
                 _kv("Duration", format_duration(file_info.get("duration_sec"))),
                 _kv("Hash", file_info.get("hash")),
@@ -250,9 +249,13 @@ def render_nfo_sections(
         )
     )
 
+    overview_text = movie.get("overview") if movie else None
+    summary_lines = [overview_text] if overview_text else ["N/A"]
+
     return [
         ("Header", [header]),
         ("Movie", movie_lines or ["N/A"]),
+        ("Summary", summary_lines),
         ("General", general_lines or ["N/A"]),
         ("Video", video_lines or ["N/A"]),
         ("Audio", audio_lines or ["N/A"]),
@@ -273,7 +276,15 @@ def render_nfo_from_sections(sections: List[tuple[str, List[str]]]) -> str:
 
     for name, section_lines in sections:
         if name == "Header":
-            lines.extend(section_lines)
+            framed_header = _frame_section_lines(
+                section_lines,
+                separator_template,
+                wrap=True,
+                pad=1,
+                use_dots=False,
+                add_pad_lines=False,
+            )
+            lines.extend(framed_header if framed_header else section_lines)
 
     for name, section_lines in sections:
         if name == "Header":
@@ -283,7 +294,14 @@ def render_nfo_from_sections(sections: List[tuple[str, List[str]]]) -> str:
             lines.extend(separator)
         else:
             lines.append(name)
-        framed_lines = _frame_section_lines(section_lines, separator_template)
+        framed_lines = _frame_section_lines(
+            section_lines,
+            separator_template,
+            wrap=(name == "Summary"),
+            pad=1,
+            use_dots=(name != "Summary"),
+            add_pad_lines=True,
+        )
         lines.extend(framed_lines)
 
     if footer_banner:
@@ -352,22 +370,25 @@ def _read_banner(name: str) -> List[str]:
 
 def _build_separator(title: str, template_lines: List[str]) -> List[str]:
     """Construit un separateur centre avec le titre de section."""
-    if not template_lines:
+    if len(template_lines) < 3:
         return []
-    if len(template_lines) < 2:
-        return list(template_lines)
-    middle = template_lines[1]
+    top, middle, bottom = template_lines[0], template_lines[1], template_lines[2]
     if len(middle) < 2:
-        return list(template_lines)
+        return [top, middle, bottom]
     inner_width = len(middle) - 2
     safe_title = title[:inner_width]
     centered = safe_title.center(inner_width)
-    updated = list(template_lines)
-    updated[1] = f"{middle[0]}{centered}{middle[-1]}"
-    return updated
+    return [top, f"{middle[0]}{centered}{middle[-1]}", bottom]
 
 
-def _frame_section_lines(lines: List[str], template_lines: List[str]) -> List[str]:
+def _frame_section_lines(
+    lines: List[str],
+    template_lines: List[str],
+    wrap: bool = False,
+    pad: int = 0,
+    use_dots: bool = True,
+    add_pad_lines: bool = True,
+) -> List[str]:
     """Encadre les lignes avec des motifs alternes gauche/droite."""
     if len(template_lines) < 4:
         return list(lines)
@@ -375,12 +396,39 @@ def _frame_section_lines(lines: List[str], template_lines: List[str]) -> List[st
     if not motifs:
         return list(lines)
     width = len(template_lines[0])
+    sample_left, sample_right = motifs[0]
+    inner_width = width - len(sample_left) - len(sample_right) - (pad * 2)
     framed: List[str] = []
-    for idx, line in enumerate(lines):
-        left, right = motifs[idx % len(motifs)]
-        inner_width = width - len(left) - len(right) - 2
-        safe_line = (line or "")[:inner_width].center(inner_width)
-        framed.append(f"{left} {safe_line} {right}")
+    line_idx = 0
+    pad_token = object()
+    cleaned = [line for line in lines if line and line.strip()]
+    if add_pad_lines:
+        render_lines = [pad_token] + cleaned + [pad_token]
+    else:
+        render_lines = cleaned
+    for line in render_lines:
+        if line == pad_token:
+            chunks = [""]
+            line = ""
+        else:
+            line = line or ""
+        if wrap:
+            chunks = textwrap.wrap(
+                line,
+                width=inner_width,
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+            if not chunks:
+                chunks = [""]
+        else:
+            chunks = [line]
+        for chunk in chunks:
+            left, right = motifs[line_idx % len(motifs)]
+            safe_line = _format_line(chunk, inner_width, use_dots=use_dots and ":" in chunk)
+            pad_str = " " * pad
+            framed.append(f"{left}{pad_str}{safe_line}{pad_str}{right}")
+            line_idx += 1
     return framed
 
 
@@ -394,3 +442,25 @@ def _extract_motifs(lines: List[str]) -> List[tuple[str, str]]:
         right = line[-3:]
         motifs.append((left, right))
     return motifs
+
+
+def _format_line(line: str, width: int, use_dots: bool = True) -> str:
+    """Formate une ligne (dots ou centré)."""
+    if use_dots and ":" in line:
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+        if not value:
+            text = key[:width]
+            return text.center(width)
+        left_pad = " " * 5
+        right_pad = " " * 5
+        usable = width - len(left_pad) - len(right_pad)
+        key = key[:usable]
+        value = value[:usable]
+        dot_width = max(2, usable - len(key) - len(value))
+        dots = "." * dot_width
+        combined = f"{left_pad}{key}{dots}{value}{right_pad}"
+        return combined[:width].ljust(width)
+    text = line[:width]
+    return text.center(width)
